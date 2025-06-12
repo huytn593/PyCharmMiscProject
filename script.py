@@ -31,14 +31,13 @@ def get_filename_without_extension(filename):
     """Extract filename without extension"""
     return os.path.splitext(filename)[0]
 
-def add_track(title, filename, album=None, genres=None, cover_image=None, is_public=True):
+def add_track(title, filename, genres=None, cover_image=None, is_public=True):
     """
     Add a new track to the database
     
     Args:
         title (str): Track title
         filename (str): MP3 filename
-        album (str, optional): Album name
         genres (list, optional): List of genres
         cover_image (str, optional): Cover image filename
         is_public (bool): Whether the track is public
@@ -51,7 +50,6 @@ def add_track(title, filename, album=None, genres=None, cover_image=None, is_pub
         track_doc = {
             "title": title,
             "filename": filename,  # Store only filename in MongoDB
-            "album": album,
             "genres": genres,
             "cover_image": cover_image,  # Store only filename in MongoDB
             "like_count": 0,
@@ -94,7 +92,6 @@ def main():
     # Get track information with rich prompts
     track_info = {
         "filename": Prompt.ask("\n[bold cyan]Audio Filename[/bold cyan]", default="example.mp3"),
-        "album": Prompt.ask("[bold cyan]Album Name[/bold cyan] (optional)") or None,
         "genres": [g.strip() for g in Prompt.ask("[bold cyan]Genres[/bold cyan] (comma-separated, optional)").split(",")] if Prompt.ask("[bold cyan]Genres[/bold cyan] (comma-separated, optional)") else None,
         "cover_image": Prompt.ask("[bold cyan]Cover Image Filename[/bold cyan] (optional)") or None,
         "is_public": Confirm.ask("[bold cyan]Make track public?[/bold cyan]", default=True)
@@ -113,7 +110,6 @@ def main():
     success = add_track(
         title=track_info["filename"],
         filename=track_info["filename"],
-        album=track_info["album"],
         genres=track_info["genres"],
         cover_image=track_info["cover_image"],
         is_public=track_info["is_public"]
