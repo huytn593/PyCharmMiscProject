@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import os
-from script import add_track, STORAGE_BASE, TRACKS_PATH, COVER_PATH, get_filename_without_extension
+from script import add_track, STORAGE_BASE, TRACKS_PATH, COVER_PATH, clean_filename
 from datetime import datetime, UTC
 import shutil
 from PIL import Image, ImageTk
@@ -10,19 +10,18 @@ from PIL import Image, ImageTk
 class MusicUploaderGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Music Track Uploader")
-        self.root.geometry("1000x800")  # Increased window size
+        self.root.title("Tải Lên Bài Hát")
+        self.root.geometry("600x500")  # Giảm kích thước cửa sổ
         
         # Configure style
         self.style = ttk.Style()
         self.style.configure('DropZone.TLabel', 
-                           font=('Helvetica', 12),
-                           padding=20,
+                           font=('Helvetica', 10),
+                           padding=15,
                            background='#f0f0f0',
                            foreground='#666666')
         
         # Variables
-        self.title_var = tk.StringVar()
         self.genres_var = tk.StringVar()
         self.is_public_var = tk.BooleanVar(value=True)
         
@@ -34,7 +33,7 @@ class MusicUploaderGUI:
         
     def setup_ui(self):
         # Main frame
-        main_frame = ttk.Frame(self.root, padding="20")
+        main_frame = ttk.Frame(self.root, padding="15")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights
@@ -44,38 +43,21 @@ class MusicUploaderGUI:
         
         # Title
         title_label = ttk.Label(main_frame, 
-                              text="Music Track Uploader", 
-                              font=('Helvetica', 24, 'bold'))
-        title_label.grid(row=0, column=0, pady=(0, 20))
-        
-        # Basic Info Section
-        info_frame = ttk.LabelFrame(main_frame, text="Track Information", padding="20")
-        info_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 20))
-        info_frame.columnconfigure(1, weight=1)
-        
-        # Title
-        ttk.Label(info_frame, text="Title:", font=('Helvetica', 12)).grid(row=0, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(info_frame, textvariable=self.title_var, width=40, font=('Helvetica', 12)).grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5)
-        
-        # Genres
-        ttk.Label(info_frame, text="Genres:", font=('Helvetica', 12)).grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(info_frame, textvariable=self.genres_var, width=40, font=('Helvetica', 12)).grid(row=1, column=1, sticky=(tk.W, tk.E), padx=5)
-        ttk.Label(info_frame, text="(comma-separated)", font=('Helvetica', 10)).grid(row=1, column=2, sticky=tk.W)
-        
-        # Public/Private
-        ttk.Checkbutton(info_frame, text="Make Public", variable=self.is_public_var, font=('Helvetica', 12)).grid(row=2, column=1, sticky=tk.W, pady=5)
+                              text="Tải Lên Bài Hát", 
+                              font=('Helvetica', 16, 'bold'))
+        title_label.grid(row=0, column=0, pady=(0, 15))
         
         # File Upload Section
-        files_frame = ttk.LabelFrame(main_frame, text="File Upload", padding="20")
-        files_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 20))
+        files_frame = ttk.LabelFrame(main_frame, text="Tải Lên File", padding="15")
+        files_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         files_frame.columnconfigure(0, weight=1)
         
         # MP3 File
         mp3_frame = ttk.Frame(files_frame)
-        mp3_frame.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 20))
+        mp3_frame.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         mp3_frame.columnconfigure(1, weight=1)
         
-        ttk.Label(mp3_frame, text="MP3 File:", font=('Helvetica', 12)).grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
+        ttk.Label(mp3_frame, text="File MP3:", font=('Helvetica', 10)).grid(row=0, column=0, sticky=tk.W, pady=(0, 5))
         
         # Create a frame for the drop zone
         mp3_drop_frame = ttk.Frame(mp3_frame, style='DropZone.TFrame')
@@ -83,7 +65,7 @@ class MusicUploaderGUI:
         mp3_drop_frame.columnconfigure(0, weight=1)
         
         self.mp3_label = ttk.Label(mp3_drop_frame, 
-                                 text="Drop MP3 file here\nor click to browse",
+                                 text="Kéo thả file MP3 vào đây\nhoặc click để chọn file",
                                  style='DropZone.TLabel',
                                  anchor='center')
         self.mp3_label.grid(row=0, column=0, sticky=(tk.W, tk.E))
@@ -96,7 +78,7 @@ class MusicUploaderGUI:
         cover_frame.grid(row=1, column=0, sticky=(tk.W, tk.E))
         cover_frame.columnconfigure(1, weight=1)
         
-        ttk.Label(cover_frame, text="Cover Image:", font=('Helvetica', 12)).grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
+        ttk.Label(cover_frame, text="Ảnh Bìa:", font=('Helvetica', 10)).grid(row=0, column=0, sticky=tk.W, pady=(0, 5))
         
         # Create a frame for the drop zone
         cover_drop_frame = ttk.Frame(cover_frame, style='DropZone.TFrame')
@@ -104,7 +86,7 @@ class MusicUploaderGUI:
         cover_drop_frame.columnconfigure(0, weight=1)
         
         self.cover_label = ttk.Label(cover_drop_frame, 
-                                   text="Drop image file here\nor click to browse",
+                                   text="Kéo thả ảnh bìa vào đây\nhoặc click để chọn file",
                                    style='DropZone.TLabel',
                                    anchor='center')
         self.cover_label.grid(row=0, column=0, sticky=(tk.W, tk.E))
@@ -112,23 +94,40 @@ class MusicUploaderGUI:
         self.cover_label.drop_target_register(DND_FILES)
         self.cover_label.dnd_bind('<<Drop>>', lambda e: self.handle_drop(e, 'cover'))
         
+        # Additional Info Section
+        info_frame = ttk.LabelFrame(main_frame, text="Thông Tin Thêm", padding="15")
+        info_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
+        info_frame.columnconfigure(1, weight=1)
+        
+        # Genres
+        ttk.Label(info_frame, text="Thể Loại:", font=('Helvetica', 10)).grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(info_frame, textvariable=self.genres_var, width=30, font=('Helvetica', 10)).grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(info_frame, text="(phân cách bằng dấu phẩy)", font=('Helvetica', 9)).grid(row=0, column=2, sticky=tk.W)
+        
+        # Public/Private
+        public_check = tk.Checkbutton(info_frame, 
+                                    text="Công Khai", 
+                                    variable=self.is_public_var,
+                                    font=('Helvetica', 10))
+        public_check.grid(row=1, column=1, sticky=tk.W, pady=5)
+        
         # Upload Button
         upload_button = ttk.Button(main_frame, 
-                                 text="Upload Track", 
+                                 text="Tải Lên", 
                                  command=self.upload_track,
                                  style='Accent.TButton')
-        upload_button.grid(row=3, column=0, pady=20)
+        upload_button.grid(row=3, column=0, pady=15)
         
         # Status Label
         self.status_label = ttk.Label(main_frame, 
                                     text="",
-                                    font=('Helvetica', 12))
+                                    font=('Helvetica', 10))
         self.status_label.grid(row=4, column=0)
         
         # Configure custom styles
         self.style.configure('Accent.TButton', 
-                           font=('Helvetica', 12, 'bold'),
-                           padding=10)
+                           font=('Helvetica', 10, 'bold'),
+                           padding=8)
         
     def browse_file(self, file_type):
         filetypes = {
@@ -149,13 +148,10 @@ class MusicUploaderGUI:
     def handle_file_selection(self, file_path, file_type):
         if file_type == 'mp3':
             self.mp3_path = file_path
-            self.mp3_label.config(text=f"Selected: {os.path.basename(file_path)}")
-            # Auto-fill title if empty
-            if not self.title_var.get():
-                self.title_var.set(get_filename_without_extension(os.path.basename(file_path)))
+            self.mp3_label.config(text=f"Đã chọn: {os.path.basename(file_path)}")
         elif file_type == 'cover':
             self.cover_path = file_path
-            self.cover_label.config(text=f"Selected: {os.path.basename(file_path)}")
+            self.cover_label.config(text=f"Đã chọn: {os.path.basename(file_path)}")
     
     def copy_file_to_storage(self, source_path, target_dir):
         if not source_path:
@@ -173,7 +169,7 @@ class MusicUploaderGUI:
     
     def upload_track(self):
         if not self.mp3_path:
-            self.status_label.config(text="Error: MP3 file is required!")
+            self.status_label.config(text="Lỗi: Vui lòng chọn file MP3!")
             return
             
         try:
@@ -186,7 +182,6 @@ class MusicUploaderGUI:
             
             # Add track to database
             success = add_track(
-                title=self.title_var.get(),
                 filename=mp3_filename,
                 genres=genres,
                 cover_image=cover_filename,
@@ -194,22 +189,21 @@ class MusicUploaderGUI:
             )
             
             if success:
-                self.status_label.config(text="Track uploaded successfully!")
+                self.status_label.config(text="Tải lên thành công!")
                 self.clear_form()
             else:
-                self.status_label.config(text="Error uploading track!")
+                self.status_label.config(text="Lỗi khi tải lên!")
                 
         except Exception as e:
-            self.status_label.config(text=f"Error: {str(e)}")
+            self.status_label.config(text=f"Lỗi: {str(e)}")
     
     def clear_form(self):
-        self.title_var.set("")
         self.genres_var.set("")
         self.is_public_var.set(True)
         self.mp3_path = None
         self.cover_path = None
-        self.mp3_label.config(text="Drop MP3 file here\nor click to browse")
-        self.cover_label.config(text="Drop image file here\nor click to browse")
+        self.mp3_label.config(text="Kéo thả file MP3 vào đây\nhoặc click để chọn file")
+        self.cover_label.config(text="Kéo thả ảnh bìa vào đây\nhoặc click để chọn file")
 
 def main():
     root = TkinterDnD.Tk()
