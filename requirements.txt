@@ -1,0 +1,4 @@
+pymongo==4.6.2
+tkinterdnd2==0.4.3
+Pillow==11.2.1
+rich==14.0.0
